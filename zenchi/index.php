@@ -52,10 +52,22 @@ function render_input($question_id)
             $response .= "<input type='hidden' name='question_code2' value='{$row['question_code']}' />";
             break;
 
+        case 'checkbox':
+            foreach ($res as $row) {
+                $response .= "
+                    <div class='form-check'>
+                        <input type='checkbox' class='form-check-input' id='{$row['choice_code']}' name='{$row['choice_group_code']}' required value='{$row['choice_value']}' >
+                        <label class='form-check-label' for='{$row['choice_code']}'> {$row['choice_value']} </label>
+                    </div>
+                    ";
+            }
+            $response .= "<input type='hidden' name='question_code2' value='{$row['question_code']}' />";
+            break;
+
         default:
             $response = "
             <div class='form-group'>
-                <input type='text' class='form-control' name='textbox' required id='textbox' placeholder='Eg: John Doe...' />
+                <input type='text' class='form-control' name='textbox_$question_code' required id='textbox_$question_code' placeholder='' />
                 <input type='hidden' name='question_code1' value='$question_code' />
             </div>
         ";
@@ -65,7 +77,7 @@ function render_input($question_id)
     return $response;
 }
 
-function generateRandomString($length = 8)
+function generateRandomString($length = 12)
 {
     $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
     $randomString = '';
@@ -143,8 +155,8 @@ if (isset($_POST['submit'])) {
 
         }
         ?>
-        <form method='post' name='xyz' onsubmit='return validate_form()'>
-            <div class='container' id='step1'>
+        <form method='post' name='xyz' id='multi-step-form' onsubmit='return validate_form()'>
+            <div class='container  step' id='step-1'>
 
                 <div class="row">
                     <div class="col-md-12">
@@ -157,14 +169,14 @@ if (isset($_POST['submit'])) {
                     </div>
                     <div class='col-md-8'></div>
                     <div class='col-md-4 mt-5'>
-                        <button type='button' class='btn btn-primary' onclick='validate_input()'>Next</button>
+                        <button type='button' class='btn btn-primary' onclick="next_step()">Next</button>
                     </div>
                 </div>
 
             </div>
 
 
-            <div class='container' id='step2'>
+            <div class='container  step' id='step-2'>
                 <div class="row">
                     <div class="col-md-12">
                         <label>
@@ -175,7 +187,27 @@ if (isset($_POST['submit'])) {
                         <?= render_input('Q002') ?>
                     </div>
                     <div class='col-md-3 mt-5'>
-                        <button type='button' class='btn btn-primary' onclick='go_back()'>Back</button>
+                        <button type='button' class='btn btn-primary' onclick='prev_step()'>Back</button>
+                    </div>
+                    <div class='col-md-5'></div>
+                    <div class='col-md-4 mt-5'>
+                        <button type='button' class='btn btn-primary' onclick="next_step()">Next</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class='container step' id='step-3'>
+                <div class="row">
+                    <div class="col-md-12">
+                        <label>
+                            <?= render_question('Q003') ?>
+                        </label>
+                    </div>
+                    <div class="col-md-12">
+                        <?= render_input('Q003') ?>
+                    </div>
+                    <div class='col-md-3 mt-5'>
+                        <button type='button' class='btn btn-primary' onclick='prev_step()'>Back</button>
                     </div>
                     <div class='col-md-5'></div>
                     <div class='col-md-4 mt-5'>
@@ -189,45 +221,63 @@ if (isset($_POST['submit'])) {
 
     <script>
 
-        var step1 = document.getElementById('step1');
-        var step2 = document.getElementById('step2');
         var text = document.getElementById("textbox");
+        var total_steps = parseInt(document.querySelectorAll('.step').length);
+        var current_step = 1;
+        var current_action = 'next';
 
         window.onload = on_load;
 
         function on_load() {
-            hide(step2);
+            hide_all_steps();
+            document.getElementById("step-1").style.display = 'block';
         }
 
-        function hide(obj) {
-            obj.style.display = 'none';
+        function hide_all_steps() {
+            for (let i = 1; i <= total_steps; i++) {
+                document.getElementById("step-" + i).style.display = 'none';
+            }
         }
 
-        function show(obj) {
-            obj.style.display = 'block';
+        function show_step(step_number) {
+            // console.log(step_number);
+            const steps = document.querySelectorAll('.step');
+
+            // invalid step
+            if (step_number < 1 || step_number > steps.length) {
+                console.log("Invalid step");
+                return;
+            }
+
+            steps[current_step - 1].style.display = 'none';
+            steps[step_number - 1].style.display = 'block';
+            current_step = step_number;
         }
 
-        function validate_input() {
-
-            if (text.value == '')
-                return false;
-
-            hide(step1);
-            show(step2);
+        function next_step() {
+            // console.log("==>" + current_step + 1);
+            // console.log(typeof (current_step));
+            if (validate_step(current_step))
+                show_step(current_step + 1);
         }
 
-        function go_back() {
-            hide(step2);
-            show(step1);
+        function prev_step() {
+            // console.log(current_step - 1);
+            show_step(current_step - 1);
+        }
+
+        function validate_step(step_num) {
+            // validate step 1, step 2 based on step num
+            // if step_num == 1 , validate what? 
+            return true;
         }
 
         function validate_form() {
-
-            if (text.value != "")
-                return true;
-
+            console.log("Validate all fields here");
             return false;
         }
+
+
     </script>
 </body>
 

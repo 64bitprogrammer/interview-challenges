@@ -1,3 +1,16 @@
+24-09-2023
+
+1. 2 tabs with dynamic form loading
+2. Based on radio choice, additional info asked
+3. save using absolute random hash
+
+Use case 1: 
+- Q1 is radio buttons
+    - on selection of radio btn choice new questions should be dynamically be loaded based on choice
+    - 
+
+
+22-09-2023
 Create a table (user_id, question, question type) with 2 questions 
 Q1 - Name 
 Answer type text string
