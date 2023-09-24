@@ -1,0 +1,40 @@
+Create a table (user_id, question, question type) with 2 questions 
+Q1 - Name 
+Answer type text string
+Q2 - Gender
+Should give multiple options (radio button), options should be fetched from database (decide how to do this)
+
+Save the response in another answers table (once a question is answered, show the next one)
+ (user id, question id, answer)
+
+Show question/answer combination for a given user
+
+E.g.
+
+What is you name - Name
+What is your gender - M
+
+
+// store questions & types
+create table questions(
+    id int primary key auto_increment,
+    question_code varchar(20) unique,
+    question varchar(200),
+    question_type varchar(200)
+);
+
+// store options for questions
+create table choices(
+    id int primary key auto_increment,
+    choice_code varchar(20) unique,
+    question_code varchar(20),
+    choice_value varchar(50)
+);
+
+// store user responses
+create table response(
+    id int primary key auto_increment,
+    question_code varchar(20),
+    response varchar(200),
+    user_id varchar(20)
+);
