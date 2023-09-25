@@ -28,8 +28,16 @@ function render_input($question_id)
     // echo "<br/>";
     // var_dump($result);
 
+
     $question_type = $result['question_type'];
     $question_code = $result['question_code'];
+    $follow_up_question_code = $result['follow_up_question_code'];
+
+    if ($follow_up_question_code != NULL) {
+        $q2 = "SELECT * FROM questions WHERE QUESTION_CODE = '$follow_up_question_code' ";
+        $res2 = mysqli_query($conn, $q2);
+        $data = mysqli_fetch_assoc($res2);
+    }
 
     $query = "SELECT * FROM choices WHERE question_code = '$question_id' ";
     // echo $query;
@@ -44,10 +52,21 @@ function render_input($question_id)
             foreach ($res as $row) {
                 $response .= "
                 <div class='form-check'>
-                    <input type='radio' class='form-check-input' id='{$row['choice_code']}' name='{$row['choice_group_code']}' required value='{$row['choice_value']}' >
+                    <input type='radio' class='form-check-input' id='{$row['choice_code']}' name='{$row['choice_group_code']}' onChange='load_follow_up_question(this.value)' required value='{$row['choice_value']}' >
                     <label class='form-check-label' for='{$row['choice_code']}'> {$row['choice_value']} </label>
                 </div>
                 ";
+            }
+            if (isset($data)) {
+                $response .= "
+                <div class='follow-up' id='follow-up'  style='display:none'>
+                    <div class='form-group'>
+                        <label> {$data['question']}</label>
+                        <input type='text' class='form-control' name='follow_up_response' id='follow_up_response'/>
+                        <input type='hidden' name='follow_up_question' value='{$data['question_code']}' />
+                    </div>
+                </div>
+            ";
             }
             $response .= "<input type='hidden' name='question_code2' value='{$row['question_code']}' />";
             break;
@@ -67,7 +86,7 @@ function render_input($question_id)
         default:
             $response = "
             <div class='form-group'>
-                <input type='text' class='form-control' name='textbox_$question_code' required id='textbox_$question_code' placeholder='' />
+                <input type='text' class='form-control' name='textbox' required id='textbox' placeholder='' />
                 <input type='hidden' name='question_code1' value='$question_code' />
             </div>
         ";
@@ -95,9 +114,17 @@ if (isset($_POST['submit'])) {
     $gender = $_POST['gender'];
     $q1 = $_POST['question_code1'];
     $q2 = $_POST['question_code2'];
-    $resp_group = generateRandomString();
+    $q3 = $_POST['follow_up_question'];
+    $q3_response = $_POST['follow_up_response'];
+    $resp_group = md5(generateRandomString());
 
-    $query = "INSERT INTO response (question_code, user_id, response,group_code) values ('$q1','$user_id','$name','$resp_group'), ('$q2','$user_id','$gender','$resp_group') ";
+    $query = "INSERT INTO response (question_code, user_id, response,unique_privacy_policy_code) values 
+    ('$q1','$user_id','$name','$resp_group'), 
+    ('$q2','$user_id','$gender','$resp_group') ";
+
+    if ($gender == "Female")
+        $query .= ",('$q3','$user_id','$q3_response','$resp_group')";
+
     // echo $query;
     $res = mysqli_query($conn, $query);
 }
@@ -124,10 +151,9 @@ if (isset($_POST['submit'])) {
     <div class="container mt-5 pt-5 ml-5 mr-5">
         <?php
         if (isset($_POST['submit'])) {
-            $q = "SELECT q.question, r.response, r.user_id, r.group_code FROM
+            $q = "SELECT q.question, r.response, r.user_id, r.unique_privacy_policy_code FROM
              response r, questions q
-             WHERE q.question_code = r.question_code
-              order by r.id desc limit 2";
+             WHERE q.question_code = r.question_code AND r.unique_privacy_policy_code ='$resp_group' ";
             // echo $q;
             $res = mysqli_query($conn, $q);
             $data = "";
@@ -136,7 +162,7 @@ if (isset($_POST['submit'])) {
                             <td>{$row['question']}</td>
                             <td>{$row['response']}</td>
                             <td>{$row['user_id']}</td>
-                            <td>{$row['group_code']}</td>
+                            <td>{$row['unique_privacy_policy_code']}</td>
                         </tr>";
             }
             echo "
@@ -146,7 +172,7 @@ if (isset($_POST['submit'])) {
                                 <th> Question </th>
                                 <th> Response</th>
                                 <th> User ID</th>
-                                <th> Group Code</th>
+                                <th> Unique Privacy Policy Code</th>
                             </tr>
                             </thead>
                             $data
@@ -274,7 +300,28 @@ if (isset($_POST['submit'])) {
 
         function validate_form() {
             console.log("Validate all fields here");
-            return false;
+            return true;
+        }
+
+        // function handle_option_change(question_code) {
+
+        //     // using ajax following can be fetched
+        //     mydata = {
+        //         follow_up_question_code: "F001",
+        //         load_on_choice_code: "CH001"
+        //     };
+        // }
+
+        function load_follow_up_question(selected_value) {
+            let obj = document.getElementById('follow-up');
+            console.log(selected_value);
+            console.log(obj);
+            if (selected_value === "Female") {
+                obj.style.display = 'block';
+            }
+            else {
+                obj.style.display = 'none';
+            }
         }
 
 
